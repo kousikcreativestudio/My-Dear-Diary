@@ -1,6 +1,6 @@
 {
   "name": "My Dear Diary",
-  "short_name": "MyDiary",
+  "short_name": "My Dear Diary",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#050816",
