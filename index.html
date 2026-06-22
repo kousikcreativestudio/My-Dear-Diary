@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-store" />
+  <title>My Dear Diary</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="premiumLoader" class="premium-loader">
+    <div class="loader-diary">
+      <div class="loader-book-icon">📖</div>
+      <h2>My Dear Diary</h2>
+      <p>Opening your private world...</p>
+      <div class="loader-line"><span></span></div>
+    </div>
+  </div>
+  <div class="app-bg"></div>
+  <div class="stars"></div>
+  <div class="premium-particles" id="premiumParticles"></div>
+
+  <!-- LOGIN PAGE -->
+  <main id="loginPage" class="page active login-page">
+    <section class="lamp-login">
+      <div class="cute-lamp" id="cuteLamp">
+        <div class="sleep-z z-one">Z</div>
+        <div class="sleep-z z-two">Z</div>
+
+        <div class="lamp-shade">
+          <div class="lamp-face">
+            <span class="eye"></span>
+            <span class="smile"></span>
+            <span class="eye"></span>
+          </div>
+        </div>
+
+        <div class="lamp-light"></div>
+        <div class="lamp-stick"></div>
+
+        <div class="lamp-pull" id="lampPull">
+          <div class="pull-rope"></div>
+          <div class="pull-knob"></div>
+        </div>
+
+        <div class="lamp-base"></div>
+        <div class="drag-hint">Drag thread ↓</div>
+      </div>
+
+      <div class="login-box-neon locked-login">
+        <h1>My Dear Diary</h1>
+        <p class="login-sub">Pull the lamp thread to unlock your private book</p>
+
+        <label>Email</label>
+        <input id="email" type="email" placeholder="Enter your email" />
+
+        <label>Password</label>
+        <input id="password" type="password" placeholder="Enter your password" />
+
+        <button onclick="emailLogin()">Login / Signup</button>
+        <button class="google-btn" onclick="googleLogin()">Continue with Google</button>
+        <p class="forgot">Firebase cloud sync • Multi-user private diary</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- DIARY PAGE -->
+  <main id="diaryPage" class="page">
+    <header class="topbar">
+      <div class="profile-mini">
+        <div class="avatar" id="profileAvatar">👤</div>
+        <div>
+          <h2 id="profileName">My Diary</h2>
+          <p id="profileEmail">Welcome</p>
+          <div id="rewardProfileBadge" class="reward-profile-badge"></div>
+        </div>
+      </div>
+
+      <div class="top-actions">
+   <button onclick="toggleSettingsMenu(event)">⚙️ Settings</button>
+</div>
+
+<div id="settingsMenu" class="settings-menu">
+   <button onclick="openProfileModal()">👤 Profile</button>
+   <button onclick="openDesignPanel()">🎨 Design</button>
+   <button onclick="openVaultModal()">🔒 Vault</button>
+   <button onclick="openTimelineModal()">⏳ Timeline</button>
+        <button onclick="openTimeCapsuleModal()">⏳ Time Capsule</button>
+   <button onclick="openMoreFeatures()">🚀 More</button>
+
+   <hr>
+
+   <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+</div>
+    </header>
+
+    <section id="premiumWelcomeBanner" class="premium-welcome-banner">
+      <div>
+        <h1>Welcome back to your story ✨</h1>
+        <p>Write, protect, and relive your favorite memories.</p>
+      </div>
+      <span>🌙</span>
+    </section>
+
+    <section class="dashboard-grid">
+      <div class="stat-card"><span>📖</span><b id="totalCount">0</b><p>Total Entries</p></div>
+      <div class="stat-card"><span>😊</span><b id="happyCount">0</b><p>Happy Days</p></div>
+      <div class="stat-card"><span>⭐</span><b id="favCount">0</b><p>Favorites</p></div>
+      <div class="stat-card"><span>📌</span><b id="pinCount">0</b><p>Pinned</p></div>
+      <div class="stat-card streak-stat-card" onclick="openStreakModal()"><span>🔥</span><b id="streakCount">0</b><p>Day Streak</p></div>
+    </section>
+
+    <section class="book-layout">
+      <div class="book">
+        <div class="book-spine"></div>
+
+        <!-- LEFT PAGE -->
+        <div class="book-page left-page">
+          <div class="luxury-diary-header">
+            <div class="diary-cover-title">📖 My Dear Diary</div>
+            <div class="diary-line"></div>
+            <div class="diary-date" id="todayDate"></div>
+          </div>
+
+          <div class="dear-text">Dear Diary,</div>
+
+          <input id="entryTitle" type="text" placeholder="Give this memory a title..." />
+
+          <div class="toolbar premium-editor-toolbar">
+            <button type="button" onmousedown="event.preventDefault()" onclick="editorCommand('bold')"><b>B</b></button>
+            <button type="button" onmousedown="event.preventDefault()" onclick="editorCommand('italic')"><i>I</i></button>
+            <button type="button" onmousedown="event.preventDefault()" onclick="editorCommand('underline')"><u>U</u></button>
+            <button type="button" onmousedown="event.preventDefault()" onclick="editorCommand('strikeThrough')"><s>S</s></button>
+
+            <select id="fontTool" class="editor-select">
+              <option value="">Font</option>
+              <option value="Arial">Arial</option>
+              <option value="Calibri">Calibri</option>
+              <option value="Verdana">Verdana</option>
+              <option value="Tahoma">Tahoma</option>
+              <option value="Trebuchet MS">Trebuchet</option>
+              <option value="Times New Roman">Times</option>
+              <option value="Georgia">Georgia</option>
+              <option value="Courier New">Typewriter</option>
+              <option value="Poppins">Poppins</option>
+              <option value="Inter">Inter</option>
+              <option value="Comic Sans MS">Cute</option>
+            </select>
+
+            <select id="fontSizeTool" class="editor-select small-select">
+              <option value="">Size</option>
+              <option value="12px">12</option>
+              <option value="14px">14</option>
+              <option value="16px">16</option>
+              <option value="18px">18</option>
+              <option value="22px">22</option>
+              <option value="26px">26</option>
+              <option value="32px">32</option>
+              <option value="42px">42</option>
+            </select>
+
+            <input id="textColorTool" title="Text color" class="editor-color" type="color" value="#3b2412" />
+            <input id="highlightTool" title="Highlight color" class="editor-color" type="color" value="#fff176" />
+
+            <button type="button" onmousedown="event.preventDefault()" onclick="editorCommand('justifyLeft')">⬅</button>
+            <button type="button" onmousedown="event.preventDefault()" onclick="editorCommand('justifyCenter')">↔</button>
+            <button type="button" onmousedown="event.preventDefault()" onclick="editorCommand('justifyRight')">➡</button>
+            <button type="button" onmousedown="event.preventDefault()" onclick="editorCommand('insertUnorderedList')">•</button>
+            <button type="button" onmousedown="event.preventDefault()" onclick="editorCommand('insertOrderedList')">1.</button>
+          </div>
+
+          <div
+            id="entryText"
+            class="rich-editor paper-editor luxury-editor"
+            contenteditable="true"
+            data-placeholder="Today was a wonderful day..."
+            oninput="saveCurrentDiaryPage()"
+          ></div>
+
+          <div class="real-page-controls">
+            <button type="button" onclick="prevWritingPage()">⬅ Previous Page</button>
+            <span id="writingPageInfo">Page 1 / 1</span>
+            <button type="button" onclick="nextWritingPage()">Next Page ➡</button>
+          </div>
+
+          <div class="real-page-actions">
+            <button type="button" onclick="addWritingPage()">➕ Add New Page</button>
+            <button type="button" class="delete-btn" onclick="deleteWritingPage()">🗑 Delete Page</button>
+          </div>
+
+          <div class="diary-line"></div>
+
+          <div class="luxury-meta">
+            <select id="entryMood">
+              <option value="😊 Happy">😊 Happy</option>
+              <option value="😢 Sad">😢 Sad</option>
+              <option value="🔥 Motivated">🔥 Motivated</option>
+              <option value="😌 Peaceful">😌 Peaceful</option>
+              <option value="🥰 Loved">🥰 Loved</option>
+              <option value="😴 Tired">😴 Tired</option>
+            </select>
+
+            <input id="entryTags" type="text" placeholder="🏷️ Family, dreams, work..." />
+            <div class="memory-upload">
+              <label class="memory-upload-label" for="entryPhoto">📷 Add Photo / Video Memory</label>
+              <input id="entryPhoto" type="file" accept="image/*,video/*" onchange="previewMemoryMedia()" />
+              <div id="photoPreviewBox" class="photo-preview-box"></div>
+              <button type="button" id="removePhotoBtn" class="remove-photo-btn" onclick="removeMemoryMedia()" style="display:none;">Remove Photo / Video</button>
+            </div>
+          </div>
+
+          <button onclick="saveEntry()">💾 Save Page</button>
+        </div>
+
+        <!-- RIGHT PAGE -->
+        <div class="book-page right-page">
+          <h3>🔍 Find Memories</h3>
+          <input id="searchInput" type="text" placeholder="Search title, text, tag..." oninput="renderEntries()" />
+
+          <select id="moodFilter" onchange="renderEntries()">
+            <option value="">All moods</option>
+            <option value="😊 Happy">😊 Happy</option>
+            <option value="😢 Sad">😢 Sad</option>
+            <option value="🔥 Motivated">🔥 Motivated</option>
+            <option value="😌 Peaceful">😌 Peaceful</option>
+            <option value="🥰 Loved">🥰 Loved</option>
+            <option value="😴 Tired">😴 Tired</option>
+          </select>
+
+          <h3>📅 Date</h3>
+          <input id="dateFilter" type="date" onchange="loadEntries()" />
+          <button onclick="clearDateFilter()">Show All Entries</button>
+
+          <h3>🌈 Quick Themes</h3>
+          <div class="theme-row">
+            <button onclick="setTheme('dark')">Dark</button>
+            <button onclick="setTheme('light')">Light</button>
+            <button onclick="setTheme('blue')">Blue</button>
+            <button onclick="setTheme('pink')">Pink</button>
+            <button onclick="setTheme('purple')">Purple</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="glass-card calendar-card">
+      <div class="calendar-head">
+        <button onclick="changeMonth(-1)">Prev</button>
+        <h3 id="calendarTitle">Calendar</h3>
+        <button onclick="changeMonth(1)">Next</button>
+      </div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+    </section>
+
+    <section class="entries-section">
+      <h3>📚 My Magical Pages</h3>
+      <div id="entriesList"></div>
+    </section>
+  </main>
+
+  <!-- PROFILE MODAL -->
+  <div id="profileModal" class="modal">
+    <div class="modal-card">
+      <h2>Edit Profile</h2>
+
+      <label>Name</label>
+      <input id="editName" type="text" placeholder="Your name" />
+
+      <label>Profile Photo URL</label>
+      <input id="editPhoto" type="text" placeholder="Paste image URL here" />
+
+      <button onclick="saveProfile()">Save Profile</button>
+      <button class="cancel-btn" onclick="closeProfileModal()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- DESIGN MODAL -->
+  <div id="designModal" class="modal">
+    <div class="modal-card">
+      <h2>🎨 Customize Design</h2>
+
+      <label>🎨 Primary Color</label>
+      <input id="primaryColor" type="color" value="#00c3ff" onchange="applyCustomDesign()" />
+
+      <label>✨ Accent Color</label>
+      <input id="accentColor" type="color" value="#ff4da6" onchange="applyCustomDesign()" />
+
+      <label>🌌 Background Color</label>
+      <input id="bgColor" type="color" value="#050816" onchange="applyCustomDesign()" />
+
+      <label>💡 Lamp Light Color</label>
+      <input id="lampColor" type="color" value="#00bfff" onchange="changeLampColor(this.value)" />
+
+      <label>🖋️ App Font Style</label>
+      <select id="fontSelect" onchange="applyCustomDesign()">
+        <option value="Inter">Inter / Modern</option>
+        <option value="Poppins">Poppins / Clean</option>
+        <option value="Georgia">Georgia / Book</option>
+        <option value="Trebuchet MS">Trebuchet / Friendly</option>
+        <option value="Courier New">Courier / Typewriter</option>
+        <option value="Comic Sans MS">Cute / Soft</option>
+      </select>
+
+      <button onclick="saveCustomDesign()">💾 Save Design</button>
+      <button class="cancel-btn" onclick="closeDesignPanel()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- EDIT ENTRY MODAL -->
+  <div id="editEntryModal" class="modal">
+    <div class="modal-card">
+      <h2>Edit Diary</h2>
+
+      <input id="editEntryTitle" type="text" placeholder="Title" />
+
+      <div id="editEntryText" class="rich-editor modal-editor" contenteditable="true"></div>
+
+      <input id="editEntryTags" type="text" placeholder="Tags" />
+
+      <select id="editEntryMood">
+        <option value="😊 Happy">😊 Happy</option>
+        <option value="😢 Sad">😢 Sad</option>
+        <option value="🔥 Motivated">🔥 Motivated</option>
+        <option value="😌 Peaceful">😌 Peaceful</option>
+        <option value="🥰 Loved">🥰 Loved</option>
+        <option value="😴 Tired">😴 Tired</option>
+      </select>
+
+      <button onclick="saveEditedEntry()">Update Diary</button>
+      <button class="cancel-btn" onclick="closeEditEntryModal()">Cancel</button>
+    </div>
+  </div>
+
+
+  <!-- SUPER FEATURES PANEL -->
+  <div id="moreFeaturesModal" class="modal">
+    <div class="modal-card super-modal structured-features-modal">
+      <h2>🚀 Super Features</h2>
+
+      <div class="feature-section">
+        <h3 onclick="toggleFeatureSection(this)">▶ 📝 CREATE</h3>
+        <div class="structured-feature-list">
+          <button onclick="startVoiceDiary()">🎤 Voice Diary</button>
+          <button onclick="openHandwritingModal()">✍️ Handwriting</button>
+          <button onclick="openAIMemoryChat()">🤖 AI Assistant</button>
+        </div>
+      </div>
+
+      <div class="feature-section">
+        <h3 onclick="toggleFeatureSection(this)">▶ 📖 MEMORIES</h3>
+        <div class="structured-feature-list">
+          <button onclick="openMemoryGalleryModal()">🖼️ Memory Gallery</button>
+          <button onclick="openSlideshowModal()">🎞️ Slideshow</button>
+          <button onclick="openMemoryJourneyModal()">📖 Memory Journey</button>
+        </div>
+      </div>
+
+      <div class="feature-section">
+        <h3 onclick="toggleFeatureSection(this)">▶ 📊 INSIGHTS</h3>
+        <div class="structured-feature-list">
+          <button onclick="openMoodAnalyticsModal()">📈 Mood Analytics</button>
+          <button onclick="generateMonthlySummary()">🧠 Monthly Summary</button>
+          <button onclick="openStreakModal()">🔥 Memory Streak</button>
+        </div>
+      </div>
+
+      <div class="feature-section">
+        <h3 onclick="toggleFeatureSection(this)">▶ 🏆 REWARDS</h3>
+        <div class="structured-feature-list">
+          <button onclick="openAchievementsModal()">🏆 Achievements</button>
+          <button onclick="openRewardsVaultModal()">🎁 Rewards Vault</button>
+          <button onclick="openThemeStoreModal()">🎨 Theme Store</button>
+        </div>
+      </div>
+
+      <div class="feature-section">
+        <h3 onclick="toggleFeatureSection(this)">▶ 🛡️ SECURITY</h3>
+        <div class="structured-feature-list">
+          <button onclick="openBackupRestoreModal()">☁️ Backup & Restore</button>
+        </div>
+      </div>
+
+      <div class="feature-section">
+        <h3 onclick="toggleFeatureSection(this)">▶ 📤 EXPORT</h3>
+        <div class="structured-feature-list">
+          <button onclick="openPDFExportModal()">📄 PDF Book Export</button>
+        </div>
+      </div>
+
+      <div id="aiOutput" class="ai-output"></div>
+      <button class="cancel-btn" onclick="closeMoreFeatures()">Close</button>
+    </div>
+  </div>
+
+  <!-- TIME CAPSULE MODAL -->
+  <div id="timeCapsuleModal" class="modal">
+    <div class="modal-card super-modal time-capsule-modal">
+      <h2>⏳ Time Capsule Memories</h2>
+      <p class="soft-text">Write a future memory letter. It stays locked until the unlock date arrives.</p>
+
+      <input id="capsuleTitle" type="text" placeholder="Capsule title..." />
+
+      <div id="capsuleText" class="rich-editor modal-editor capsule-editor" contenteditable="true" data-placeholder="Write a message to your future self..."></div>
+
+      <label>Unlock Date</label>
+      <input id="capsuleUnlockDate" type="date" />
+
+      <div class="capsule-quick-row">
+        <button onclick="setCapsuleQuickDate(30)">1 Month</button>
+        <button onclick="setCapsuleQuickDate(180)">6 Months</button>
+        <button onclick="setCapsuleQuickDate(365)">1 Year</button>
+      </div>
+
+      <button onclick="saveTimeCapsule()">🔒 Save Time Capsule</button>
+
+      <div class="capsule-tabs">
+        <button onclick="loadTimeCapsules('all')">All</button>
+        <button onclick="loadTimeCapsules('locked')">Locked</button>
+        <button onclick="loadTimeCapsules('unlocked')">Unlocked</button>
+      </div>
+
+      <div id="timeCapsuleList" class="time-capsule-list"></div>
+
+      <button class="cancel-btn" onclick="closeTimeCapsuleModal()">Close</button>
+    </div>
+  </div>
+
+  <!-- AI MEMORY CHAT MODAL -->
+  <div id="aiMemoryChatModal" class="modal">
+    <div class="modal-card super-modal ai-memory-chat-modal">
+     <h2>🤖 AI Assistant</h2> 
+      <p class="soft-text">Ask questions about your saved diary memories. Works offline using your saved entries.</p>
+
+      <div id="aiChatMessages" class="ai-chat-messages">
+        <div class="ai-bubble bot">Hi! Ask me things like: "Show my happy memories", "What did I write about family?", or "Summarize this month".</div>
+      </div>
+
+      <div class="ai-quick-prompts">
+        <button onclick="askAIQuick('Show my happy memories')">😊 Happy</button>
+        <button onclick="askAIQuick('Show my favorite memories')">⭐ Favorites</button>
+        <button onclick="askAIQuick('Summarize this month')">🧠 This Month</button>
+        <button onclick="askAIQuick('What did I write about family?')">🏷️ Family</button>
+      </div>
+
+      <div class="ai-chat-input-row">
+        <input id="aiMemoryQuestion" type="text" placeholder="Ask about your memories..." onkeydown="if(event.key==='Enter') askAIMemoryChat()" />
+        <button onclick="askAIMemoryChat()">Ask</button>
+      </div>
+
+      <button class="cancel-btn" onclick="closeAIMemoryChat()">Close</button>
+    </div>
+  </div>
+
+  <!-- SECRET VAULT MODAL -->
+  <div id="vaultModal" class="modal">
+    <div class="modal-card super-modal vault-media-modal">
+      <h2>🔒 Secret Vault</h2>
+      <div id="vaultSetupBox" class="vault-setup-box">
+        <input id="vaultPassword" type="password" placeholder="Create / enter original vault password" />
+        <input id="vaultFakePassword" type="password" placeholder="Fake password optional" />
+        <button onclick="saveVaultPasswords()">Save Vault Passwords</button>
+      </div>
+
+      <div id="vaultUnlockBox" class="vault-unlock-box">
+        <input id="vaultUnlockPassword" type="password" placeholder="Enter vault password" />
+        <button onclick="unlockVault()">Unlock Vault</button>
+        <div id="vaultLockoutStatus" class="vault-lockout-status"></div>
+      </div>
+      <div class="vault-fingerprint-box">
+        <button onclick="setupVaultFingerprint()">👆 Setup Fingerprint</button>
+        <button onclick="unlockVaultWithFingerprint()">🔓 Unlock with Fingerprint</button>
+        <div id="vaultFingerprintStatus" class="fingerprint-status"></div>
+      </div>
+
+      <div id="vaultArea" class="hidden-panel">
+        <div id="vaultModeLabel" class="vault-mode-label"></div>
+        <div id="vaultRealEditor">
+        <input id="vaultTitle" type="text" placeholder="Secret title" />
+        <div id="vaultText" class="rich-editor modal-editor" contenteditable="true" data-placeholder="Write secret memory..."></div>
+
+        <div class="vault-media-upload">
+          <label class="memory-upload-label" for="vaultMediaFile">📷 Add Secret Photo / Video</label>
+          <input id="vaultMediaFile" type="file" accept="image/*,video/*" onchange="previewVaultMedia()" />
+          <div id="vaultMediaPreview" class="photo-preview-box"></div>
+          <button type="button" id="removeVaultMediaBtn" class="remove-photo-btn" onclick="removeVaultMedia()" style="display:none;">Remove Secret Media</button>
+        </div>
+
+        <button onclick="saveVaultEntry()">💾 Save Secret</button>
+        <button type="button" onclick="openChangeVaultPasswordBox()">🔐 Change Password</button>
+        <div id="changeVaultPasswordBox" class="change-vault-password-box" style="display:none;">
+          <input id="oldVaultPassword" type="password" placeholder="Old original password" />
+          <input id="newVaultPassword" type="password" placeholder="New original password" />
+          <input id="newVaultFakePassword" type="password" placeholder="New fake password optional" />
+          <button type="button" onclick="changeVaultPassword()">Save New Password</button>
+        </div>
+        <div class="vault-filter-row">
+          <button onclick="loadVaultEntries('all')">All</button>
+          <button onclick="loadVaultEntries('photos')">Photos</button>
+          <button onclick="loadVaultEntries('videos')">Videos</button>
+        </div>
+        <div id="vaultEntries"></div>
+        </div>
+      </div>
+      <button class="cancel-btn" onclick="closeVaultModal()">Close</button>
+    </div>
+  </div>
+
+  <!-- TIMELINE MODAL -->
+  <div id="timelineModal" class="modal">
+    <div class="modal-card super-modal timeline-pro-modal">
+      <h2>⏳ Memory Timeline 2.0</h2>
+      <p class="soft-text">Pinned memories first, grouped beautifully by year and month.</p>
+
+      <input id="timelineSearch" type="text" placeholder="Search timeline memories..." oninput="renderPremiumTimeline()" />
+
+      <div class="timeline-filter-row">
+        <button onclick="setTimelineFilter('all')">All</button>
+        <button onclick="setTimelineFilter('pinned')">📌 Pinned</button>
+        <button onclick="setTimelineFilter('favorites')">⭐ Favorites</button>
+      </div>
+
+      <div id="timelineContent" class="timeline-box timeline-pro-box"></div>
+
+      <button class="cancel-btn" onclick="closeTimelineModal()">Close</button>
+    </div>
+  </div>
+
+  <!-- HANDWRITING MODAL -->
+  <div id="handwritingModal" class="modal">
+    <div class="modal-card super-modal">
+      <h2>✍️ Handwriting Mode</h2>
+      <canvas id="handCanvas" width="720" height="420"></canvas>
+      <div class="feature-grid">
+        <button onclick="clearHandwriting()">Clear</button>
+        <button onclick="insertHandwriting()">Insert Into Diary</button>
+      </div>
+      <button class="cancel-btn" onclick="closeHandwritingModal()">Close</button>
+    </div>
+  </div>
+
+  <!-- SLIDESHOW MODAL -->
+  <div id="slideshowModal" class="modal">
+    <div class="modal-card super-modal">
+      <h2>🎞️ Memory Slideshow</h2>
+      <div id="slideshowBox" class="slideshow-box"></div>
+      <div class="feature-grid">
+        <button onclick="prevSlide()">Prev</button>
+        <button onclick="nextSlide()">Next</button>
+      </div>
+      <button class="cancel-btn" onclick="closeSlideshowModal()">Close</button>
+    </div>
+  </div>
+
+  <!-- MOOD ANALYTICS MODAL -->
+  <div id="moodAnalyticsModal" class="modal">
+    <div class="modal-card super-modal mood-analytics-modal">
+      <h2>📊 Mood Analytics Dashboard</h2>
+      <p class="soft-text">Understand your diary moods, favorite memories, pins, tags, and monthly writing pattern.</p>
+
+      <div id="analyticsSummaryCards" class="analytics-summary-grid"></div>
+
+      <div class="analytics-layout">
+        <div class="analytics-panel">
+          <h3>😊 Mood Balance</h3>
+          <div id="moodDonut" class="mood-donut"></div>
+          <div id="moodLegend" class="mood-legend"></div>
+        </div>
+
+        <div class="analytics-panel">
+          <h3>📅 This Month</h3>
+          <div id="monthAnalytics"></div>
+        </div>
+      </div>
+
+      <div class="analytics-panel">
+        <h3>📈 Mood Chart</h3>
+        <div id="moodBarChart" class="mood-bar-chart"></div>
+      </div>
+
+      <div class="analytics-layout">
+        <div class="analytics-panel">
+          <h3>🏷️ Top Tags</h3>
+          <div id="tagAnalytics"></div>
+        </div>
+        <div class="analytics-panel">
+          <h3>💡 AI Insight</h3>
+          <div id="analyticsInsight" class="analytics-insight"></div>
+        </div>
+      </div>
+
+      <button class="cancel-btn" onclick="closeMoodAnalyticsModal()">Close</button>
+    </div>
+  </div>
+
+  <!-- BACKUP & RESTORE MODAL -->
+  <div id="backupRestoreModal" class="modal">
+    <div class="modal-card super-modal backup-restore-modal">
+      <h2>☁️ Backup & Restore</h2>
+      <p class="soft-text">Export your diary data as a backup file and restore it later on another device.</p>
+
+      <div class="backup-stats" id="backupStats">
+        Loading backup info...
+      </div>
+
+      <div class="backup-actions-grid">
+        
+      <div class="secure-backup-box">
+        <h3>🔐 Secure Backup Password</h3>
+        <input id="backupPassword" type="password" placeholder="Enter password for backup export/restore" />
+        <p class="soft-text">Remember this password. Without it, encrypted backup cannot be restored.</p>
+      </div>
+<button onclick="exportDiaryBackup()">⬇️ Export Backup JSON</button>
+        <label class="backup-import-label" for="backupImportFile">⬆️ Import Backup JSON</label>
+        <input id="backupImportFile" type="file" accept="application/json,.json" onchange="importDiaryBackup(event)" />
+      </div>
+
+      <div class="backup-warning">
+        ⚠️ Restore will add backup memories to your account. It will not delete existing memories.
+      </div>
+
+      <div id="backupRestoreStatus" class="ai-output"></div>
+
+      <button class="cancel-btn" onclick="closeBackupRestoreModal()">Close</button>
+    </div>
+  </div>
+
+  <!-- FINGERPRINT MODAL -->
+  <div id="fingerprintModal" class="modal">
+    <div class="modal-card super-modal">
+      <h2>👆 Fingerprint Unlock</h2>
+      <p class="soft-text">Works best on HTTPS/PWA installed app. If device biometric is unavailable, use normal login.</p>
+      <button onclick="tryFingerprint()">Try Device Unlock</button>
+      <div id="fingerprintStatus" class="ai-output"></div>
+      <button class="cancel-btn" onclick="closeFingerprintUnlock()">Close</button>
+    </div>
+  </div>
+
+
+
+  <!-- PREMIUM PDF EXPORT MODAL -->
+  <div id="pdfExportModal" class="modal">
+    <div class="modal-card super-modal pdf-export-card">
+      <h2>📄 Export Diary Book</h2>
+      <p class="soft-text">Create a beautiful printable diary book from your saved memories.</p>
+
+      <label>Book Title</label>
+      <input id="pdfBookTitle" type="text" value="My Dear Diary" />
+
+      <label>Export Type</label>
+      <select id="pdfExportType">
+        <option value="all">All Entries</option>
+        <option value="favorites">Favorites Only ⭐</option>
+        <option value="pinned">Pinned Only 📌</option>
+        <option value="currentMonth">Current Month</option>
+      </select>
+
+      <label>Include Photos</label>
+      <select id="pdfIncludePhotos">
+        <option value="yes">Yes, include photos</option>
+        <option value="no">No, text only</option>
+      </select>
+
+      <button onclick="exportPremiumPDF()">📖 Create PDF Book</button>
+      <button class="cancel-btn" onclick="closePDFExportModal()">Cancel</button>
+
+      <div id="pdfExportStatus" class="ai-output"></div>
+    </div>
+  </div>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script type="module" src="app.js"></script>
+
+<div id="memoryGalleryModal" class="modal">
+<div class="modal-card" style="max-width:1000px">
+<h2>🖼️ Memory Gallery</h2>
+<div style="display:flex;gap:10px;margin:10px 0">
+<button onclick="filterGallery('all')">All</button>
+<button onclick="filterGallery('image')">Photos</button>
+<button onclick="filterGallery('video')">Videos</button>
+</div>
+<div id="galleryGrid"></div>
+<button class="cancel-btn" onclick="closeMemoryGalleryModal()">Close</button>
+</div></div>
+
+  <!-- THEME STORE MODAL -->
+  <div id="themeStoreModal" class="modal">
+    <div class="modal-card super-modal theme-store-modal">
+      <h2>🎨 Theme Store</h2>
+      <p class="soft-text">Choose a premium theme for My Dear Diary. Your theme will save automatically.</p>
+
+      <div class="theme-store-grid">
+        <div class="theme-card galaxy" onclick="applyThemeStore('galaxy')">
+          <div class="theme-preview"></div>
+          <h3>🌌 Galaxy</h3>
+          <p>Purple blue star glow</p>
+        </div>
+
+        <div class="theme-card royal" onclick="applyThemeStore('royal')">
+          <div class="theme-preview"></div>
+          <h3>💎 Royal Gold</h3>
+          <p>Luxury black & gold</p>
+        </div>
+
+        <div class="theme-card sakura" onclick="applyThemeStore('sakura')">
+          <div class="theme-preview"></div>
+          <h3>🌸 Sakura</h3>
+          <p>Soft pink dreamy diary</p>
+        </div>
+
+        <div class="theme-card neon" onclick="applyThemeStore('neon')">
+          <div class="theme-preview"></div>
+          <h3>⚡ Neon Cyber</h3>
+          <p>Cyan pink futuristic glow</p>
+        </div>
+
+        <div class="theme-card midnight" onclick="applyThemeStore('midnight')">
+          <div class="theme-preview"></div>
+          <h3>🌙 Midnight</h3>
+          <p>Premium dark minimal</p>
+        </div>
+
+        <div class="theme-card nature" onclick="applyThemeStore('nature')">
+          <div class="theme-preview"></div>
+          <h3>🌿 Nature</h3>
+          <p>Green calm forest style</p>
+        </div>
+      </div>
+
+      <button onclick="resetThemeStore()">Reset Default Theme</button>
+      <button class="cancel-btn" onclick="closeThemeStoreModal()">Close</button>
+    </div>
+  </div>
+
+
+
+<div id="memoryJourneyModal" class="modal">
+<div class="modal-card" style="max-width:700px">
+<h2>📖 Memory Journey</h2>
+<div id="memoryJourneyContent"></div>
+<button onclick="closeMemoryJourneyModal()">Close</button>
+</div></div>
+
+  <!-- ACHIEVEMENTS MODAL -->
+  <div id="achievementsModal" class="modal">
+    <div class="modal-card super-modal achievements-modal">
+      <h2>🏆 Achievements</h2>
+      <p class="soft-text">Unlock badges as you write, save memories, use themes, and protect secrets.</p>
+      <div id="achievementsGrid" class="achievements-grid"></div>
+      <button class="cancel-btn" onclick="closeAchievementsModal()">Close</button>
+    </div>
+  </div>
+
+  <div id="achievementToast" class="achievement-toast"></div>
+
+  <!-- REWARDS VAULT MODAL -->
+  <div id="rewardsVaultModal" class="modal">
+    <div class="modal-card super-modal rewards-vault-modal">
+      <h2>🎁 Rewards Vault</h2>
+      <p class="soft-text">Achievements now unlock real rewards like special themes and profile badges.</p>
+
+      <div class="reward-tabs">
+        <button onclick="renderRewardsVault('all')">All Rewards</button>
+        <button onclick="renderRewardsVault('unlocked')">Unlocked</button>
+        <button onclick="renderRewardsVault('locked')">Locked</button>
+      </div>
+
+      <div id="rewardsVaultGrid" class="rewards-vault-grid"></div>
+
+      <button onclick="resetRewardTheme()">Reset Reward Theme</button>
+      <button class="cancel-btn" onclick="closeRewardsVaultModal()">Close</button>
+    </div>
+  </div>
+
+  <div id="rewardToast" class="reward-toast"></div>
+
+  <!-- MEMORY STREAK MODAL -->
+  <div id="streakModal" class="modal">
+    <div class="modal-card super-modal streak-modal">
+      <h2>🔥 Memory Streak</h2>
+      <p class="soft-text">Write daily and grow your diary streak.</p>
+      <div id="streakContent"></div>
+      <button class="cancel-btn" onclick="closeStreakModal()">Close</button>
+    </div>
+  </div>
+
+  <!-- AUTO LOCK OVERLAY -->
+  <div id="autoLockOverlay" class="auto-lock-overlay">
+    <div class="auto-lock-card">
+      <div class="auto-lock-icon">🔒</div>
+      <h2>App Locked</h2>
+      <p>Your diary was locked because of inactivity.</p>
+      <button onclick="unlockAutoLock()">Unlock App</button>
+      <button class="cancel-btn" onclick="logout()">Logout</button>
+    </div>
+  </div>
+</body>
+</html>
