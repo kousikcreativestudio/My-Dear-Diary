@@ -1,0 +1,20 @@
+{
+  "id": "./",
+  "name": "My Dear Diary",
+  "short_name": "My Dear Diary",
+  "description": "A private diary for writing, protecting, and revisiting memories.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#050816",
+  "theme_color": "#00c3ff",
+  "categories": ["lifestyle", "productivity"],
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
