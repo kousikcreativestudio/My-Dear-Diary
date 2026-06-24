@@ -5558,3 +5558,434 @@ if("serviceWorker" in navigator){
     });
   });
 }
+
+/* ===== VAULT PHOTO/VIDEO SAVE FIX ===== */
+
+const VAULT_MEDIA_DB = "myDearDiarySecureVaultMedia";
+const VAULT_MEDIA_STORE = "media";
+const vaultMediaObjectUrls = new Set();
+
+function openVaultMediaDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(VAULT_MEDIA_DB, 1);
+
+    request.onupgradeneeded = () => {
+      const database = request.result;
+
+      if (!database.objectStoreNames.contains(VAULT_MEDIA_STORE)) {
+        database.createObjectStore(VAULT_MEDIA_STORE, {
+          keyPath: "id"
+        });
+      }
+    };
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(
+      request.error || new Error("Private media storage could not open")
+    );
+  });
+}
+
+async function saveEncryptedVaultMedia(file, password) {
+  validateMediaFile(file);
+
+  const salt = vaultEncRandomBase64(16);
+  const iv = vaultEncRandomBase64(12);
+  const key = await vaultDeriveEncryptionKey(password, salt);
+
+  const encryptedFile = await crypto.subtle.encrypt(
+    {
+      name: "AES-GCM",
+      iv: vaultEncBase64ToBytes(iv)
+    },
+    key,
+    await file.arrayBuffer()
+  );
+
+  const id = "vault_media_" + Date.now() + "_" +
+    (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2));
+
+  const database = await openVaultMediaDB();
+
+  await new Promise((resolve, reject) => {
+    const transaction = database.transaction(VAULT_MEDIA_STORE, "readwrite");
+
+    transaction.objectStore(VAULT_MEDIA_STORE).put({
+      id,
+      uid: currentUser.uid,
+      type: file.type || "application/octet-stream",
+      name: file.name || "secret-media",
+      salt,
+      iv,
+      encryptedFile,
+      createdAt: Date.now()
+    });
+
+    transaction.oncomplete = resolve;
+    transaction.onerror = () => reject(
+      transaction.error || new Error("Media could not be saved")
+    );
+  });
+
+  database.close();
+  return id;
+}
+
+async function readEncryptedVaultMedia(id, password) {
+  const database = await openVaultMediaDB();
+
+  const record = await new Promise((resolve, reject) => {
+    const transaction = database.transaction(VAULT_MEDIA_STORE, "readonly");
+    const request = transaction.objectStore(VAULT_MEDIA_STORE).get(id);
+
+    request.onsuccess = () => resolve(request.result || null);
+    request.onerror = () => reject(request.error);
+  });
+
+  database.close();
+
+  if (!record || record.uid !== currentUser?.uid) {
+    return null;
+  }
+
+  const key = await vaultDeriveEncryptionKey(password, record.salt);
+
+  const decryptedFile = await crypto.subtle.decrypt(
+    {
+      name: "AES-GCM",
+      iv: vaultEncBase64ToBytes(record.iv)
+    },
+    key,
+    record.encryptedFile
+  );
+
+  return new Blob([decryptedFile], {
+    type: record.type
+  });
+}
+
+async function deleteEncryptedVaultMedia(id) {
+  if (!id) return;
+
+  try {
+    const database = await openVaultMediaDB();
+
+    await new Promise((resolve, reject) => {
+      const transaction = database.transaction(VAULT_MEDIA_STORE, "readwrite");
+
+      transaction.objectStore(VAULT_MEDIA_STORE).delete(id);
+      transaction.oncomplete = resolve;
+      transaction.onerror = () => reject(transaction.error);
+    });
+
+    database.close();
+  } catch (error) {
+    console.warn("Vault media deletion failed:", error);
+  }
+}
+
+function clearVaultMediaURLs() {
+  vaultMediaObjectUrls.forEach(url => URL.revokeObjectURL(url));
+  vaultMediaObjectUrls.clear();
+}
+
+async function prepareLocalVaultMedia(entry) {
+  if (!entry.localMediaId || entry.mediaUrl) {
+    return entry;
+  }
+
+  try {
+    const blob = await readEncryptedVaultMedia(
+      entry.localMediaId,
+      activeVaultEncryptionPassword
+    );
+
+    if (!blob) {
+      return {...entry, mediaMissing: true};
+    }
+
+    const url = URL.createObjectURL(blob);
+    vaultMediaObjectUrls.add(url);
+
+    return {
+      ...entry,
+      mediaUrl: url,
+      mediaType: entry.mediaType || blob.type
+    };
+  } catch (error) {
+    console.warn("Vault media could not be opened:", error);
+    return {...entry, mediaMissing: true};
+  }
+}
+
+window.saveVaultEntry = async function () {
+  if (!currentUser) return alert("Login first");
+
+  if (currentVaultMode !== "real") {
+    return alert("Unlock real vault first");
+  }
+
+  if (!activeVaultEncryptionPassword) {
+    return alert("Unlock vault again");
+  }
+
+  const title = ($("vaultTitle")?.value || "").trim() || "Secret Memory";
+  const text = sanitizeEditorHTML(
+    ($("vaultText")?.innerHTML || "").trim()
+  );
+
+  const mediaFile = $("vaultMediaFile")?.files?.[0];
+
+  if (!stripHTML(text) && !mediaFile) {
+    return alert("Write secret memory or add photo/video");
+  }
+
+  let uploadedMedia = {
+    mediaUrl: "",
+    mediaPath: ""
+  };
+
+  let localMediaId = "";
+
+  try {
+    if (mediaFile) {
+      try {
+        uploadedMedia = await uploadUserMedia(mediaFile, "vault");
+      } catch (uploadError) {
+        console.warn("Cloud upload failed. Saving privately:", uploadError);
+
+        localMediaId = await saveEncryptedVaultMedia(
+          mediaFile,
+          activeVaultEncryptionPassword
+        );
+      }
+    }
+
+    const secretData = {
+      title,
+      text,
+      mediaUrl: uploadedMedia.mediaUrl,
+      mediaPath: uploadedMedia.mediaPath,
+      localMediaId,
+      mediaType: mediaFile ? mediaFile.type : "",
+      dateText: new Date().toLocaleString()
+    };
+
+    const encryptedPayload = await encryptVaultPayload(
+      secretData,
+      activeVaultEncryptionPassword
+    );
+
+    const entryData = {
+      uid: currentUser.uid,
+      encrypted: true,
+      vaultData: encryptedPayload,
+      createdAtLocal: Date.now(),
+      dateText: new Date().toLocaleString()
+    };
+
+    let savedToCloud = false;
+
+    if (!localMediaId) {
+      try {
+        await addDoc(collection(db, "vaultEntries"), {
+          ...entryData,
+          createdAt: serverTimestamp()
+        });
+
+        savedToCloud = true;
+      } catch (cloudError) {
+        console.warn("Cloud save failed:", cloudError);
+      }
+    }
+
+    if (!savedToCloud) {
+      const entries = getLocalVaultEntries();
+
+      entries.push({
+        id: "local_vault_" + Date.now(),
+        ...entryData,
+        localOnly: true
+      });
+
+      saveLocalVaultEntries(entries);
+    }
+
+    $("vaultTitle").value = "";
+    $("vaultText").innerHTML = "";
+    removeVaultMedia();
+
+    if (localMediaId) {
+      alert("Secret photo/video saved privately on this device");
+    } else {
+      alert(savedToCloud ? "Encrypted secret saved" : "Secret saved locally");
+    }
+
+    await loadVaultEntries("all");
+
+  } catch (error) {
+    if (uploadedMedia.mediaPath) {
+      await deleteStoredMedia(uploadedMedia.mediaPath);
+    }
+
+    if (localMediaId) {
+      await deleteEncryptedVaultMedia(localMediaId);
+    }
+
+    alert("Secret could not be saved: " + error.message);
+  }
+};
+
+window.loadVaultEntries = async function (filterType = "all") {
+  if (!currentUser) return;
+
+  if (currentVaultMode === "fake") {
+    $("vaultEntries").innerHTML = "";
+    return;
+  }
+
+  let entries = [];
+
+  try {
+    const vaultQuery = query(
+      collection(db, "vaultEntries"),
+      where("uid", "==", currentUser.uid)
+    );
+
+    const snapshot = await getDocs(vaultQuery);
+
+    snapshot.forEach(item => {
+      entries.push({
+        id: item.id,
+        ...item.data(),
+        cloud: true
+      });
+    });
+  } catch (error) {
+    console.warn("Cloud vault loading failed:", error);
+  }
+
+  entries = entries.concat(getLocalVaultEntries());
+
+  clearVaultMediaURLs();
+
+  const readableEntries = [];
+
+  for (const entry of entries) {
+    const decrypted = await decryptVaultEntryForSafeDisplay(entry);
+    readableEntries.push(await prepareLocalVaultMedia(decrypted));
+  }
+
+  let filteredEntries = readableEntries;
+
+  if (filterType === "photos") {
+    filteredEntries = readableEntries.filter(entry =>
+      (entry.mediaType || "").startsWith("image")
+    );
+  }
+
+  if (filterType === "videos") {
+    filteredEntries = readableEntries.filter(entry =>
+      (entry.mediaType || "").startsWith("video")
+    );
+  }
+
+  filteredEntries.sort((a, b) =>
+    (b.createdAt?.seconds || b.createdAtLocal || 0) -
+    (a.createdAt?.seconds || a.createdAtLocal || 0)
+  );
+
+  $("vaultEntries").innerHTML = filteredEntries.length
+    ? filteredEntries.map(entry => `
+        <div class="vault-entry vault-entry-card">
+          <h3>${escapeHTML(entry.title || "Secret Memory")}</h3>
+
+          <small>
+            ${escapeHTML(entry.dateText || "")}
+            ${entry.localOnly ? " • Local" : ""}
+            ${entry.encrypted ? " • 🔐 Encrypted" : ""}
+          </small>
+
+          ${entry.decryptFailed
+            ? `<div class="empty">Unlock with the original vault password.</div>`
+            : ""
+          }
+
+          ${entry.mediaMissing
+            ? `<div class="empty">Media is unavailable on this device.</div>`
+            : ""
+          }
+
+          ${entry.text
+            ? `<div>${sanitizeEditorHTML(entry.text)}</div>`
+            : ""
+          }
+
+          ${renderVaultMedia(entry)}
+
+          <button class="delete-btn"
+            onclick="deleteVaultEntry('${entry.id}', '${filterType}')">
+            Delete Secret
+          </button>
+        </div>
+      `).join("")
+    : `<div class="empty">No secret memories yet.</div>`;
+};
+
+window.deleteVaultEntry = async function (id, filterType = "all") {
+  if (!confirm("Delete this secret memory?")) return;
+
+  let mediaPath = "";
+  let localMediaId = "";
+
+  if (String(id).startsWith("local_vault_")) {
+    const entries = getLocalVaultEntries();
+    const existingEntry = entries.find(entry => entry.id === id);
+
+    if (existingEntry) {
+      const readableEntry = await decryptVaultEntryForSafeDisplay(existingEntry);
+      mediaPath = readableEntry.mediaPath || "";
+      localMediaId = readableEntry.localMediaId || "";
+    }
+
+    saveLocalVaultEntries(
+      entries.filter(entry => entry.id !== id)
+    );
+  } else {
+    try {
+      const vaultReference = doc(db, "vaultEntries", id);
+      const snapshot = await getDoc(vaultReference);
+
+      if (snapshot.exists()) {
+        const readableEntry = await decryptVaultEntryForSafeDisplay({
+          id,
+          ...snapshot.data()
+        });
+
+        mediaPath = readableEntry.mediaPath || "";
+        localMediaId = readableEntry.localMediaId || "";
+      }
+
+      await deleteDoc(vaultReference);
+    } catch (error) {
+      return alert("Delete failed: " + error.message);
+    }
+  }
+
+  if (mediaPath) {
+    await deleteStoredMedia(mediaPath);
+  }
+
+  if (localMediaId) {
+    await deleteEncryptedVaultMedia(localMediaId);
+  }
+
+  await loadVaultEntries(filterType);
+};
+
+const closeVaultBeforeMediaFix = window.closeVaultModal;
+
+window.closeVaultModal = function () {
+  clearVaultMediaURLs();
+  closeVaultBeforeMediaFix();
+};
