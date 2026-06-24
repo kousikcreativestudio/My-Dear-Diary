@@ -5558,3 +5558,209 @@ if("serviceWorker" in navigator){
     });
   });
 }
+
+/* ===== FINAL FIRESTORE PHOTO FIX: MAIN DIARY + ENCRYPTED VAULT ===== */
+
+const FIRESTORE_MEDIA_LIMIT = 430000;
+
+function mediaBlobToDataURL(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(reader.error || new Error("The selected file could not be read."));
+    reader.readAsDataURL(blob);
+  });
+}
+
+function imageFileToElement(file) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    const url = URL.createObjectURL(file);
+    image.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("The selected photo could not be opened."));
+    };
+    image.src = url;
+  });
+}
+
+function canvasToJPEGBlob(canvas, quality) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      blob => blob ? resolve(blob) : reject(new Error("The photo could not be compressed.")),
+      "image/jpeg",
+      quality
+    );
+  });
+}
+
+async function prepareMediaForFirestore(file) {
+  if (!file) return { mediaUrl: "", mediaType: "" };
+
+  if (!/^(image|video)\//i.test(file.type || "")) {
+    throw new Error("Please choose a photo or video.");
+  }
+
+  if ((file.type || "").startsWith("video")) {
+    if (file.size > FIRESTORE_MEDIA_LIMIT) {
+      throw new Error("Without Firebase Storage, videos must be smaller than 430 KB.");
+    }
+    return {
+      mediaUrl: await mediaBlobToDataURL(file),
+      mediaType: file.type
+    };
+  }
+
+  const image = await imageFileToElement(file);
+  let scale = Math.min(1, 1280 / Math.max(image.naturalWidth, image.naturalHeight));
+
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+    canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+
+    const context = canvas.getContext("2d");
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+    for (const quality of [0.84, 0.72, 0.60, 0.48, 0.36]) {
+      const blob = await canvasToJPEGBlob(canvas, quality);
+      if (blob.size <= FIRESTORE_MEDIA_LIMIT) {
+        return {
+          mediaUrl: await mediaBlobToDataURL(blob),
+          mediaType: "image/jpeg"
+        };
+      }
+    }
+
+    scale *= 0.78;
+  }
+
+  throw new Error("This photo is too large. Please choose a smaller photo.");
+}
+
+window.saveEntry = async function () {
+  if (!currentUser) return alert("Login first");
+
+  const title = $("entryTitle").value.trim();
+  saveCurrentDiaryPage();
+
+  const pages = diaryPages
+    .map(page => sanitizeEditorHTML((page || "").trim()))
+    .filter(page => stripHTML(page));
+
+  if (!pages.length) return alert("Write your diary first");
+
+  const text = pages.join("<hr class='entry-page-break'>");
+  const mood = $("entryMood").value;
+  const tags = $("entryTags").value
+    .split(",")
+    .map(tag => tag.trim())
+    .filter(Boolean);
+
+  const mediaFile = $("entryPhoto")?.files?.[0];
+
+  try {
+    const media = await prepareMediaForFirestore(mediaFile);
+
+    await addDoc(collection(db, "diaryEntries"), {
+      uid: currentUser.uid,
+      title: title || "Untitled Diary",
+      text,
+      pages,
+      mood,
+      tags,
+      favorite: false,
+      pinned: false,
+      createdAt: serverTimestamp(),
+      dateText: new Date().toLocaleString(),
+      dateOnly: new Date().toISOString().split("T")[0],
+      mediaUrl: media.mediaUrl,
+      mediaType: media.mediaType
+    });
+
+    $("entryTitle").value = "";
+    diaryPages = [""];
+    currentDiaryPageIndex = 0;
+    $("entryText").innerHTML = "";
+    updateWritingPageInfo();
+    $("entryTags").value = "";
+    removeMemoryMedia();
+
+    alert("Diary saved");
+    await loadEntries();
+  } catch (error) {
+    alert("Diary save failed: " + error.message);
+  }
+};
+
+window.saveVaultEntry = async function () {
+  if (!currentUser) return alert("Login first");
+  if (currentVaultMode !== "real") return alert("Unlock real vault first");
+  if (!activeVaultEncryptionPassword) return alert("Unlock vault again");
+
+  const title = ($("vaultTitle")?.value || "").trim() || "Secret Memory";
+  const text = sanitizeEditorHTML(($("vaultText")?.innerHTML || "").trim());
+  const mediaFile = $("vaultMediaFile")?.files?.[0];
+
+  if (!stripHTML(text) && !mediaFile) {
+    return alert("Write secret memory or add photo/video");
+  }
+
+  try {
+    const media = await prepareMediaForFirestore(mediaFile);
+    const dateText = new Date().toLocaleString();
+
+    const encryptedPayload = await encryptVaultPayload({
+      title,
+      text,
+      mediaUrl: media.mediaUrl,
+      mediaType: media.mediaType,
+      dateText
+    }, activeVaultEncryptionPassword);
+
+    const entryData = {
+      uid: currentUser.uid,
+      encrypted: true,
+      vaultData: encryptedPayload,
+      createdAtLocal: Date.now(),
+      dateText
+    };
+
+    let savedToCloud = false;
+
+    try {
+      await addDoc(collection(db, "vaultEntries"), {
+        ...entryData,
+        createdAt: serverTimestamp()
+      });
+      savedToCloud = true;
+    } catch (cloudError) {
+      console.warn("Vault cloud save failed:", cloudError);
+    }
+
+    if (!savedToCloud) {
+      const entries = getLocalVaultEntries();
+      entries.push({
+        id: "local_vault_" + Date.now(),
+        ...entryData,
+        localOnly: true
+      });
+      saveLocalVaultEntries(entries);
+    }
+
+    $("vaultTitle").value = "";
+    $("vaultText").innerHTML = "";
+    removeVaultMedia();
+
+    alert(savedToCloud ? "Encrypted secret saved" : "Encrypted secret saved locally");
+    await loadVaultEntries("all");
+  } catch (error) {
+    alert("Vault save failed: " + error.message);
+  }
+};
