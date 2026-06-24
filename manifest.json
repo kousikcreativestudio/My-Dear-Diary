@@ -11,9 +11,9 @@
   "categories": ["lifestyle", "productivity"],
   "icons": [
     {
-      "src": "icons/icon.svg",
+      "src": "icons/icon-512.png",
       "sizes": "any",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]
