@@ -886,31 +886,66 @@ window.generateAIAssistant = function(){
 };
 
 window.generateMonthlySummary = function(){
+  const output = $("aiOutput");
+
+  if(output.dataset.summaryOpen === "true"){
+    output.innerText = "";
+    output.style.display = "none";
+    output.dataset.summaryOpen = "false";
+    return;
+  }
+
   const now = new Date();
-  const monthKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
-  const monthEntries = allEntries.filter(e => (e.dateOnly || "").startsWith(monthKey));
+  const monthKey =
+    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+  const monthEntries = allEntries.filter(e =>
+    (e.dateOnly || "").startsWith(monthKey)
+  );
 
   const moodCount = {};
-  monthEntries.forEach(e => moodCount[e.mood || "Unknown"] = (moodCount[e.mood || "Unknown"] || 0) + 1);
 
-  const topMood = Object.entries(moodCount).sort((a,b)=>b[1]-a[1])[0];
+  monthEntries.forEach(e => {
+    const mood = e.mood || "Unknown";
+    moodCount[mood] = (moodCount[mood] || 0) + 1;
+  });
 
-  let summary = `🧠 Monthly Summary\n\nEntries this month: ${monthEntries.length}\n`;
-  summary += `Top mood: ${topMood ? `${topMood[0]} (${topMood[1]})` : "No entries yet"}\n\n`;
+  const topMood = Object.entries(moodCount)
+    .sort((a, b) => b[1] - a[1])[0];
+
+  let summary =
+    `🧠 Monthly Summary\n\n` +
+    `Entries this month: ${monthEntries.length}\n`;
+
+  summary +=
+    `Top mood: ${
+      topMood ? `${topMood[0]} (${topMood[1]})` : "No entries yet"
+    }\n\n`;
 
   if(monthEntries.length){
-    const tags = monthEntries.flatMap(e => e.tags || []);
     const tagCount = {};
-    tags.forEach(t => tagCount[t] = (tagCount[t] || 0) + 1);
-    const topTag = Object.entries(tagCount).sort((a,b)=>b[1]-a[1])[0];
+
+    monthEntries.flatMap(e => e.tags || []).forEach(tag => {
+      tagCount[tag] = (tagCount[tag] || 0) + 1;
+    });
+
+    const topTag = Object.entries(tagCount)
+      .sort((a, b) => b[1] - a[1])[0];
+
     summary += `Most used tag: ${topTag ? "#" + topTag[0] : "No tags"}\n`;
     summary += "Your month has been saved as memories. Keep writing consistently 💙";
   }else{
     summary += "Start writing today and I will summarize your month automatically.";
   }
 
-  $("aiOutput").innerText = summary;
-  $("moreFeaturesModal").classList.add("active");
+  output.innerText = summary;
+  output.style.display = "block";
+  output.dataset.summaryOpen = "true";
+
+  output.scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
 };
 
 window.startVoiceDiary = function(){
