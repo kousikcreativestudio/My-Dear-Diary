@@ -6,7 +6,7 @@
    responses as they're fetched, so there's actually something to fall
    back to when the network request fails. */
 
-const CACHE_NAME = 'my-dear-diary-v3';
+const CACHE_NAME = 'my-dear-diary-v4-monthly-summary-fix';
 
 const CORE_ASSETS = [
   './',
