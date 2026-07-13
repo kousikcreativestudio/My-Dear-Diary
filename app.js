@@ -527,21 +527,29 @@ window.previewMemoryMedia = function(){
 
   const url = URL.createObjectURL(file);
 
+  box.textContent = "";
+
+  const previewCard = document.createElement("div");
+  previewCard.className = "preview-card";
+
+  let mediaEl;
+
   if(file.type.startsWith("video")){
-    box.innerHTML = `
-      <div class="preview-card">
-        <video controls src="${url}"></video>
-        <p>🎞️ ${escapeHTML(file.name)}</p>
-      </div>
-    `;
+    mediaEl = document.createElement("video");
+    mediaEl.controls = true;
+    mediaEl.src = url;
   }else{
-    box.innerHTML = `
-      <div class="preview-card">
-        <img src="${url}" alt="Preview">
-        <p>📷 ${escapeHTML(file.name)}</p>
-      </div>
-    `;
+    mediaEl = document.createElement("img");
+    mediaEl.src = url;
+    mediaEl.alt = "Preview";
   }
+
+  const fileNameEl = document.createElement("p");
+  fileNameEl.textContent = `${file.type.startsWith("video") ? "🎞️" : "📷"} ${file.name || "Selected file"}`;
+
+  previewCard.appendChild(mediaEl);
+  previewCard.appendChild(fileNameEl);
+  box.appendChild(previewCard);
 
   if(removeBtn) removeBtn.style.display = "block";
 };
@@ -1239,21 +1247,29 @@ window.previewVaultMedia = function(){
 
   const url = URL.createObjectURL(file);
 
+  box.textContent = "";
+
+  const previewCard = document.createElement("div");
+  previewCard.className = "preview-card";
+
+  let mediaEl;
+
   if(file.type.startsWith("video")){
-    box.innerHTML = `
-      <div class="preview-card">
-        <video controls src="${url}"></video>
-        <p>🎞️ ${escapeHTML(file.name)}</p>
-      </div>
-    `;
+    mediaEl = document.createElement("video");
+    mediaEl.controls = true;
+    mediaEl.src = url;
   }else{
-    box.innerHTML = `
-      <div class="preview-card">
-        <img src="${url}" alt="Vault preview">
-        <p>📷 ${escapeHTML(file.name)}</p>
-      </div>
-    `;
+    mediaEl = document.createElement("img");
+    mediaEl.src = url;
+    mediaEl.alt = "Vault preview";
   }
+
+  const fileNameEl = document.createElement("p");
+  fileNameEl.textContent = `${file.type.startsWith("video") ? "🎞️" : "📷"} ${file.name || "Selected file"}`;
+
+  previewCard.appendChild(mediaEl);
+  previewCard.appendChild(fileNameEl);
+  box.appendChild(previewCard);
 
   if(removeBtn) removeBtn.style.display = "block";
 };
