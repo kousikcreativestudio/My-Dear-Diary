@@ -525,7 +525,6 @@ window.previewMemoryMedia = function(){
     return;
   }
 
-  const url = URL.createObjectURL(file);
 
   box.textContent = "";
 
@@ -537,10 +536,10 @@ window.previewMemoryMedia = function(){
   if(file.type.startsWith("video")){
     mediaEl = document.createElement("video");
     mediaEl.controls = true;
-    mediaEl.src = url;
+    mediaEl.src = URL.createObjectURL(file.slice(0, file.size, file.type));
   }else{
     mediaEl = document.createElement("img");
-    mediaEl.src = url;
+    mediaEl.src = URL.createObjectURL(file.slice(0, file.size, file.type));
     mediaEl.alt = "Preview";
   }
 
@@ -1245,7 +1244,6 @@ window.previewVaultMedia = function(){
     return;
   }
 
-  const url = URL.createObjectURL(file);
 
   box.textContent = "";
 
@@ -1257,10 +1255,10 @@ window.previewVaultMedia = function(){
   if(file.type.startsWith("video")){
     mediaEl = document.createElement("video");
     mediaEl.controls = true;
-    mediaEl.src = url;
+    mediaEl.src = URL.createObjectURL(file.slice(0, file.size, file.type));
   }else{
     mediaEl = document.createElement("img");
-    mediaEl.src = url;
+    mediaEl.src = URL.createObjectURL(file.slice(0, file.size, file.type));
     mediaEl.alt = "Vault preview";
   }
 
