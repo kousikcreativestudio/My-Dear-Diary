@@ -531,22 +531,14 @@ window.previewMemoryMedia = function(){
   const previewCard = document.createElement("div");
   previewCard.className = "preview-card";
 
-  let mediaEl;
-
-  if(file.type.startsWith("video")){
-    mediaEl = document.createElement("video");
-    mediaEl.controls = true;
-    mediaEl.src = URL.createObjectURL(file.slice(0, file.size, file.type));
-  }else{
-    mediaEl = document.createElement("img");
-    mediaEl.src = URL.createObjectURL(file.slice(0, file.size, file.type));
-    mediaEl.alt = "Preview";
-  }
+  const previewIcon = document.createElement("div");
+  previewIcon.className = "preview-file-icon";
+  previewIcon.textContent = file.type.startsWith("video") ? "🎞️" : "📷";
 
   const fileNameEl = document.createElement("p");
-  fileNameEl.textContent = `${file.type.startsWith("video") ? "🎞️" : "📷"} ${file.name || "Selected file"}`;
+  fileNameEl.textContent = `${file.type.startsWith("video") ? "Video selected:" : "Photo selected:"} ${file.name || "Selected file"}`;
 
-  previewCard.appendChild(mediaEl);
+  previewCard.appendChild(previewIcon);
   previewCard.appendChild(fileNameEl);
   box.appendChild(previewCard);
 
@@ -1250,22 +1242,14 @@ window.previewVaultMedia = function(){
   const previewCard = document.createElement("div");
   previewCard.className = "preview-card";
 
-  let mediaEl;
-
-  if(file.type.startsWith("video")){
-    mediaEl = document.createElement("video");
-    mediaEl.controls = true;
-    mediaEl.src = URL.createObjectURL(file.slice(0, file.size, file.type));
-  }else{
-    mediaEl = document.createElement("img");
-    mediaEl.src = URL.createObjectURL(file.slice(0, file.size, file.type));
-    mediaEl.alt = "Vault preview";
-  }
+  const previewIcon = document.createElement("div");
+  previewIcon.className = "preview-file-icon";
+  previewIcon.textContent = file.type.startsWith("video") ? "🎞️" : "📷";
 
   const fileNameEl = document.createElement("p");
-  fileNameEl.textContent = `${file.type.startsWith("video") ? "🎞️" : "📷"} ${file.name || "Selected file"}`;
+  fileNameEl.textContent = `${file.type.startsWith("video") ? "Secret video selected:" : "Secret photo selected:"} ${file.name || "Selected file"}`;
 
-  previewCard.appendChild(mediaEl);
+  previewCard.appendChild(previewIcon);
   previewCard.appendChild(fileNameEl);
   box.appendChild(previewCard);
 
