@@ -3176,3 +3176,12 @@ html{
   }
 }
 
+/* FIX: stop dashboard showing before login */
+body #diaryPage.page:not(.active){
+  display: none !important;
+}
+
+/* FIX: stop login page showing after login */
+body #loginPage.page:not(.active){
+  display: none !important;
+}
