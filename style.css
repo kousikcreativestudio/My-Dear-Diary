@@ -3175,3 +3175,32 @@ html{
     scroll-behavior:auto !important;
   }
 }
+
+/* ===== AUTH VISIBILITY FINAL FIX ===== */
+/* Hide diary/dashboard until Firebase login is confirmed */
+body #diaryPage.page:not(.active){
+  display:none !important;
+  visibility:hidden !important;
+  pointer-events:none !important;
+}
+
+/* Show diary only after login */
+body #diaryPage.page.active{
+  display:flex !important;
+  flex-direction:column !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
+}
+
+/* Login page visible only before login */
+body #loginPage.page:not(.active){
+  display:none !important;
+  visibility:hidden !important;
+  pointer-events:none !important;
+}
+
+body #loginPage.page.active{
+  display:block !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
+}
