@@ -1177,15 +1177,14 @@ window.closeVaultModal = function(){
   $("vaultModal").classList.remove("active");
 };
 
-window.saveVaultPasswords = function(){
+window.saveVaultPasswords = async function(){
   if(!currentUser) return alert("Login first");
   const pass = $("vaultPassword").value.trim();
   const fake = $("vaultFakePassword").value.trim();
 
   if(!pass) return alert("Enter vault password");
 
-  localStorage.setItem("vaultPass_" + currentUser.uid, pass);
-  if(fake) localStorage.setItem("vaultFakePass_" + currentUser.uid, fake);
+  await saveVaultPasswordHashes(pass, fake);
 
   alert("Vault passwords saved");
 };
@@ -1197,17 +1196,17 @@ window.unlockVault = async function(){
   const real = localStorage.getItem("vaultPass_" + currentUser.uid);
   const fake = localStorage.getItem("vaultFakePass_" + currentUser.uid);
 
-  if(!real){
+  if(!vaultAnyPasswordExists()){
     return alert("Set vault password first");
   }
 
-  if(pass === fake && fake){
+  if((await verifyVaultPasswordHashed(pass)) === "fake"){
     $("vaultArea").classList.add("active");
     $("vaultEntries").innerHTML = `<div class="empty">Fake vault opened. No secret memories here.</div>`;
     return;
   }
 
-  if(pass !== real){
+  if((await verifyVaultPasswordHashed(pass)) !== "real"){
     return alert("Wrong password");
   }
 
@@ -2941,6 +2940,30 @@ function vaultRealKey(){
 function vaultFakeKey(){
   return "vaultFakePass_" + (currentUser?.uid || "guest");
 }
+/* ===== VAULT PASSWORD HASH SECURITY FIX ===== */
+async function hashVaultPassword(password){
+  const data = new TextEncoder().encode(String(password));
+  const digest = await crypto.subtle.digest("SHA-256", data);
+
+  return "sha256:" + Array.from(new Uint8Array(digest))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function isHashedVaultPassword(value){
+  return String(value || "").startsWith("sha256:");
+}
+
+async function verifyVaultPassword(input, stored){
+  if(!stored) return false;
+
+  if(isHashedVaultPassword(stored)){
+    return (await hashVaultPassword(input)) === stored;
+  }
+
+  // Old plain password support
+  return input === stored;
+}
 
 function vaultLocalKey(){
   return "myDearDiaryVaultEntries_" + (currentUser?.uid || "guest");
@@ -3011,7 +3034,7 @@ window.closeVaultModal = function(){
   currentVaultMode = "locked";
 };
 
-window.saveVaultPasswords = function(){
+window.saveVaultPasswords = async function(){
   if(!currentUser) return alert("Login first");
 
   const pass = $("vaultPassword")?.value.trim() || "";
@@ -3020,8 +3043,7 @@ window.saveVaultPasswords = function(){
   if(!pass) return alert("Enter original vault password");
   if(fake && fake === pass) return alert("Fake password must be different from original password");
 
-  localStorage.setItem(vaultRealKey(), pass);
-  if(fake) localStorage.setItem(vaultFakeKey(), fake);
+  await saveVaultPasswordHashes(pass, fake);
 
   alert("Vault passwords saved");
   updateVaultPasswordUI();
@@ -3034,21 +3056,21 @@ window.unlockVault = async function(){
   const real = localStorage.getItem(vaultRealKey());
   const fake = localStorage.getItem(vaultFakeKey());
 
-  if(!real){
+  if(!vaultAnyPasswordExists()){
     updateVaultPasswordUI();
     return alert("Set vault password first");
   }
 
   if(!pass) return alert("Enter vault password");
 
-  if(fake && pass === fake){
+  if((await verifyVaultPasswordHashed(pass)) === "fake"){
     $("vaultArea")?.classList.add("active");
     setVaultMode("fake");
     $("vaultEntries").innerHTML = `<div class="empty">Fake vault opened. No secret memories here.</div>`;
     return;
   }
 
-  if(pass !== real){
+  if((await verifyVaultPasswordHashed(pass)) !== "real"){
     return alert("Wrong password");
   }
 
@@ -3178,14 +3200,14 @@ window.unlockVault = async function(){
   const real = localStorage.getItem(vaultRealKey());
   const fake = localStorage.getItem(vaultFakeKey());
 
-  if(!real){
+  if(!vaultAnyPasswordExists()){
     updateVaultPasswordUI();
     return alert("Set vault password first");
   }
 
   if(!pass) return alert("Enter vault password");
 
-  if(fake && pass === fake){
+  if((await verifyVaultPasswordHashed(pass)) === "fake"){
     $("vaultArea")?.classList.add("active");
     setVaultMode("fake");
     if($("vaultModeLabel")) $("vaultModeLabel").style.display = "none";
@@ -3193,7 +3215,7 @@ window.unlockVault = async function(){
     return;
   }
 
-  if(pass !== real){
+  if((await verifyVaultPasswordHashed(pass)) !== "real"){
     return alert("Wrong password");
   }
 
@@ -3209,7 +3231,7 @@ window.openChangeVaultPasswordBox = function(){
   box.style.display = box.style.display === "none" ? "block" : "none";
 };
 
-window.changeVaultPassword = function(){
+window.changeVaultPassword = async function(){
   if(!currentUser) return alert("Login first");
 
   const oldPass = $("oldVaultPassword")?.value.trim() || "";
@@ -3217,16 +3239,11 @@ window.changeVaultPassword = function(){
   const newFake = $("newVaultFakePassword")?.value.trim() || "";
   const real = localStorage.getItem(vaultRealKey());
 
-  if(oldPass !== real) return alert("Old password is wrong");
+  if((await verifyVaultPasswordHashed(oldPass)) !== "real") return alert("Old password is wrong");
   if(!newPass) return alert("Enter new original password");
   if(newFake && newFake === newPass) return alert("Fake password must be different from original password");
 
-  localStorage.setItem(vaultRealKey(), newPass);
-  if(newFake){
-    localStorage.setItem(vaultFakeKey(), newFake);
-  }else{
-    localStorage.removeItem(vaultFakeKey());
-  }
+  await saveVaultPasswordHashes(newPass, newFake);
 
   $("oldVaultPassword").value = "";
   $("newVaultPassword").value = "";
