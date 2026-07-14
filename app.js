@@ -4,7 +4,8 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   GoogleAuthProvider,
-  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   onAuthStateChanged,
   signOut
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -34,6 +35,17 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+
+getRedirectResult(auth)
+  .then((result) => {
+    if (result && result.user) {
+      console.log("Google login success:", result.user.email);
+    }
+  })
+  .catch((error) => {
+    console.warn("Google redirect login error:", error);
+  });
+
 const db = getFirestore(app);
 
 let currentUser = null;
@@ -65,11 +77,16 @@ window.emailLogin = async function () {
   }
 };
 
-window.googleLogin = async function () {
+window.googleLogin = window.loginWithGoogle = async function () {
   try {
-    await signInWithPopup(auth, new GoogleAuthProvider());
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({
+      prompt: "select_account"
+    });
+
+    await signInWithRedirect(auth, provider);
   } catch (error) {
-    alert(error.message);
+    alert("Firebase: " + error.message);
   }
 };
 
