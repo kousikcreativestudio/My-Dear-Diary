@@ -427,6 +427,72 @@ function loadProfile(user) {
   $("profileAvatar").innerHTML = photo ? `<img src="${escapeHTML(photo)}" alt="Profile">` : "👤";
 }
 
+function compressProfileImage(file){
+  return new Promise((resolve, reject) => {
+    if(!file) return resolve("");
+
+    if(!file.type.startsWith("image/")){
+      reject(new Error("Please choose an image file"));
+      return;
+    }
+
+    if(file.size > 5 * 1024 * 1024){
+      reject(new Error("Image is too large. Please choose image below 5MB"));
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const img = new Image();
+
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const size = 300;
+        canvas.width = size;
+        canvas.height = size;
+
+        const ctx = canvas.getContext("2d");
+
+        const minSide = Math.min(img.width, img.height);
+        const sx = (img.width - minSide) / 2;
+        const sy = (img.height - minSide) / 2;
+
+        ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
+
+        const compressed = canvas.toDataURL("image/jpeg", 0.72);
+        resolve(compressed);
+      };
+
+      img.onerror = () => reject(new Error("Could not read image"));
+      img.src = reader.result;
+    };
+
+    reader.onerror = () => reject(new Error("Could not read file"));
+    reader.readAsDataURL(file);
+  });
+}
+
+window.previewProfilePhoto = async function(input){
+  const file = input.files && input.files[0];
+  if(!file) return;
+
+  try{
+    const photoData = await compressProfileImage(file);
+
+    $("editPhoto").value = photoData;
+
+    const preview = $("profilePhotoPreview");
+    if(preview){
+      preview.src = photoData;
+      preview.style.display = "block";
+    }
+  }catch(error){
+    alert(error.message);
+    input.value = "";
+  }
+};
+
 window.openProfileModal = function () {
   $("editName").value = $("profileName").innerText;
   $("editPhoto").value = localStorage.getItem("profilePhoto_" + currentUser.uid) || currentUser.photoURL || "";
@@ -437,13 +503,21 @@ window.closeProfileModal = function () {
   $("profileModal").classList.remove("active");
 };
 
-window.saveProfile = function () {
+window.saveProfile = async function(){
   const name = $("editName").value.trim();
-  const photo = $("editPhoto").value.trim();
+  let photo = $("editPhoto").value.trim();
 
-  if (!name) {
-    alert("Enter your name");
-    return;
+  if(!name) return alert("Enter your name");
+
+  const fileInput = $("editPhotoFile");
+
+  if(fileInput && fileInput.files && fileInput.files[0]){
+    try{
+      photo = await compressProfileImage(fileInput.files[0]);
+    }catch(error){
+      alert(error.message);
+      return;
+    }
   }
 
   localStorage.setItem("profileName_" + currentUser.uid, name);
