@@ -66,6 +66,11 @@ window.emailLogin = async function () {
     return;
   }
 
+  if (password.length < 6 || password.length > 8) {
+  alert("Password must be minimum 6 and maximum 8 characters");
+  return;
+}
+
   try {
     await signInWithEmailAndPassword(auth, email, password);
   } catch {
