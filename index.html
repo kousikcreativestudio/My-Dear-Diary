@@ -272,8 +272,26 @@
       <label>Name</label>
       <input id="editName" type="text" placeholder="Your name" />
 
-      <label>Profile Photo URL</label>
-      <input id="editPhoto" type="text" placeholder="Paste image URL here" />
+      <label>Profile Photo</label>
+
+<input id="editPhoto" type="hidden" />
+
+<input
+  id="editPhotoFile"
+  type="file"
+  accept="image/*"
+  onchange="previewProfilePhoto(this)"
+/>
+
+<img
+  id="profilePhotoPreview"
+  alt="Profile preview"
+  style="display:none;width:90px;height:90px;border-radius:50%;object-fit:cover;margin:12px auto;border:3px solid rgba(255,255,255,.4);"
+/>
+
+<small style="display:block;text-align:center;color:#dbeafe;margin-bottom:12px;">
+  Choose image from gallery. No payment needed.
+</small>
 
       <button onclick="saveProfile()">Save Profile</button>
       <button class="cancel-btn" onclick="closeProfileModal()">Cancel</button>
