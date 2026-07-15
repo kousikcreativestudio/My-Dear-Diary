@@ -6,7 +6,7 @@
    responses as they're fetched, so there's actually something to fall
    back to when the network request fails. */
 
-const CACHE_NAME = 'my-dear-diary-v5-google-redirect-login';
+const CACHE_NAME = 'my-dear-diary-v6-profile-gallery';
 
 const CORE_ASSETS = [
   './',
