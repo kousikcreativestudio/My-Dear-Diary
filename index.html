@@ -56,7 +56,13 @@
         <input id="email" type="email" placeholder="Enter your email" />
 
         <label>Password</label>
-        <input id="password" type="password" placeholder="Enter your password" />
+        <input
+  id="password"
+  type="password"
+  placeholder="Enter 6 to 8 characters"
+  minlength="6"
+  maxlength="8"
+/>
 
         <button onclick="emailLogin()">Login / Signup</button>
         <button class="google-btn" onclick="googleLogin()">Continue with Google</button>
